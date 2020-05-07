@@ -4,110 +4,189 @@ using System.Collections.Generic;
 using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 using System.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace lesson3
 {
     class Program
     {
-
+        [Obsolete]
         static void Main(string[] args)
         {
-            //List<string> list = new List<string>();
 
-            //list.Add("test");
-            //list.AddRange(new List<string>{ "dd", "fff", "dd" });
-            //int index = list.IndexOf("dd");
-            //list.Insert(0, "InsertedElement");
-            //list.InsertRange(1, new List<string> { "test1", "test2" });
-            //list.Remove("dd");
-            //list.RemoveAt(list.IndexOf("dd"));
-            //list.Sort();
-
-            //Dictionary<int, Person> listDic = new Dictionary<int, Person>();
-            //listDic.Add(1123, new Person() { FullName = "Test" });
-            //Dictionary<int, string> listDic = new Dictionary<int, string>();
-            //listDic.Add(972, "TJS");
-            //listDic.Add(840, "USD");
-            //Dictionary<int, string> listDic = new Dictionary<int, string>() 
-            //{
-            //    [972] = "TJS",
-            //    [840] = "USD"
-            //};
-            //listDic.Add(972, "TJS");
-            //listDic.Add(840, "USD");
-            //foreach (var item in listDic)
-            //{
-            //    Console.WriteLine($"Key:{item.Key} | Value:{item.Value}");
-            //}
-
-            //int[] number = { 0, 2, 3, 4, 5 };
-
-            //IEnumerator ieList = number.GetEnumerator();
-            //while (ieList.MoveNext())
-            //{
-            //    Console.WriteLine(ieList.Current);
-            //}
-            //ieList.Reset();
-
-            //yield return
-
-            //yield break;
-
-
-
-            //var x = GetSomeNumber(5);
-            City c = new City();
-            foreach (var item in c.GetPersons(100))
+            using(var context = new AlifAcademyContext())
             {
-                Console.WriteLine(item.FullName);
+                var modelList = context.Models.Include(i => i.Company).ToList();
+
             }
+
+
+            while (true)
+            {
+                Console.Clear();
+                Console.Write("1.Create\n2.Read\n3.Update\n4.Delete\nChoice:");
+                var choice = Console.ReadLine();
+                switch (choice)
+                {
+                    case "1": Create(); break;
+                    case "2": Read(); break;
+                    case "3": Update(); break;
+                    case "4": Delete(); break;
+                    default:
+                        break;
+                }
+            }
+        }
+        private static void Delete()
+        {
+            try
+            {
+                using (var context = new AlifAcademyContext())
+                {
+                    Read("update");
+                    Console.WriteLine("Please select");
+                    Console.Write("ID:");
+                    var companyId = Convert.ToInt32(Console.ReadLine());
+                    var company = context.Company.Find(companyId);
+
+                    if (company != null)
+                    {
+                        Console.Write("Are you sure? Y(yes)/N(no):");
+                        var confirm = Console.ReadLine();
+                        if (confirm.ToUpper() == "Y") context.Company.Remove(company);
+
+                        if (context.SaveChanges() > 0)
+                        {
+                            SuccessMessage("Company deleted!");
+                        }
+                        else
+                        {
+                            FailMessage("Company not deleted!");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                FailMessage(ex.Message);
+            }
+            finally
+            {
+                ConsoleReadWithPressKeyMessage();
+            }
+        }
+        private static void Update()
+        {
+            try
+            {
+                using (var context = new AlifAcademyContext())
+                {
+                    Read("update");
+                    Console.WriteLine("Please select");
+                    Console.Write("ID:");
+                    var companyId = Convert.ToInt32(Console.ReadLine());
+                    var company = context.Company.Find(companyId);
+
+                    //SELECT * FROM COMPANY WHERE ID = companyId
+
+                    if (company != null)
+                    {
+                        Console.Write("New company name:");
+                        var newCompanyName = Console.ReadLine();
+                        company.CompanyName = newCompanyName;
+                        if (context.SaveChanges() > 0)
+                        {
+                            SuccessMessage("Company changed!");
+                        }
+                        else
+                        {
+                            FailMessage("Company not changed!");
+                        }
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                FailMessage(ex.Message);
+            }
+            finally
+            {
+                ConsoleReadWithPressKeyMessage();
+            }
+        }
+        private static void Read(string type = null)
+        {
+            try
+            {
+                //using (var workContext = new AlifAcademyContext())
+                using (var context = new AlifAcademyContext())
+                {
+                    var companyList = context.Company.ToList();
+
+                    companyList.ForEach(p =>
+                    {
+                        Console.WriteLine($"ID:{p.Id}\tCompanyName:{p.CompanyName}");
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                FailMessage(ex.Message);
+            }
+            finally
+            {
+                if (type != "update")
+                {
+                    ConsoleReadWithPressKeyMessage();
+                }
+            }
+
+        }
+        private static void Create()
+        {
+            try
+            {
+                using (var context = new AlifAcademyContext())
+                {
+                    Console.Write("Enter new comapny name:");
+                    var companyName = Console.ReadLine();
+                    Company comp = new Company()
+                    {
+                        CompanyName = companyName
+                    };
+                    context.Company.Add(comp);
+
+                    var result = context.SaveChanges();
+                    if (result > 0)
+                    {
+                        SuccessMessage("Add company");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                FailMessage(ex.Message);
+            }
+            finally
+            {
+                ConsoleReadWithPressKeyMessage();
+            }
+        }
+        private static void ConsoleReadWithPressKeyMessage()
+        {
+            Console.WriteLine("Press any key to continue...");
             Console.ReadKey();
         }
-        //static IEnumerable GetSomeNumber(int number)
-        //{
-        //    for (int i = 0; i < 10; i++)
-        //    {
-        //        if (number == i)
-        //        {
-        //            yield return i;
-        //        }
-        //    }
-
-        //    yield break;
-        //}
-    }
-    public class Person
-    {
-        public string FullName { get; set; }
-
-        public Person(string FullName)
+        private static void FailMessage(string failText)
         {
-            this.FullName = FullName;
+            Console.WriteLine($"Fail: {failText}");
         }
-    }
-
-    public class City
-    {
-        private Person[] People;
-        public City()
+        private static void SuccessMessage(string text)
         {
-            People = new Person[] { new Person("P1"), new Person("P2"), new Person("P3") };
-        }
-        public int Length { get { return People.Length; } }
-
-        public IEnumerable<Person> GetPersons(int max)
-        {
-            for (int i = 0; i < max; i++)
-            {
-                if(i == People.Length)
-                {
-                    yield break;
-                }
-                else
-                {
-                    yield return People[i];
-                }
-            }
+            Console.WriteLine($"Success: {text}");
         }
     }
 }
